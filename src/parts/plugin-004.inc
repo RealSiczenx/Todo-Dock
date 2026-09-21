@@ -59,8 +59,8 @@
             char **names = kind == 3 ? obs_frontend_get_profiles() : obs_frontend_get_scene_collections();
             if (names) { for (char **n = names; *n; ++n) result << QString::fromUtf8(*n); bfree(names); }
         } else if (kind == 1 || kind == 6) {
-            obs_enum_sources([](void *data, obs_source_t *s) {
-                static_cast<QStringList *>(data)->append(sourceName(s)); return true;
+            obs_enum_sources([](void *listContext, obs_source_t *s) {
+                static_cast<QStringList *>(listContext)->append(sourceName(s)); return true;
             }, &result);
         }
         result.removeDuplicates(); result.sort(Qt::CaseInsensitive); return result;
