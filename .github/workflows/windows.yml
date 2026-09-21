@@ -37,7 +37,6 @@ jobs:
         run: |
           git clone https://github.com/obsproject/obs-plugintemplate.git .obs-template
           git -C .obs-template checkout 3e7d7ac3b5342cd7d9b88890b9c70b472d1520fc
-
           Remove-Item -Recurse -Force .obs-template\src
           Copy-Item -Recurse -Force src .obs-template\src
           Copy-Item -Force windows\CMakeLists.txt .obs-template\CMakeLists.txt
@@ -46,20 +45,17 @@ jobs:
       - name: Configure against OBS 31.1.1 and Qt 6
         shell: pwsh
         working-directory: .obs-template
-        run: |
-          cmake --preset windows-x64
+        run: cmake --preset windows-x64
 
       - name: Build DLL
         shell: pwsh
         working-directory: .obs-template
-        run: |
-          cmake --build --preset windows-x64 --config RelWithDebInfo --parallel
+        run: cmake --build --preset windows-x64 --config RelWithDebInfo --parallel
 
       - name: Stage plugin
         shell: pwsh
         working-directory: .obs-template
-        run: |
-          cmake --install build_x64 --config RelWithDebInfo --prefix "$env:GITHUB_WORKSPACE\stage"
+        run: cmake --install build_x64 --config RelWithDebInfo --prefix "$env:GITHUB_WORKSPACE\stage"
 
       - name: Verify and package
         shell: pwsh
@@ -72,93 +68,89 @@ jobs:
 
           New-Item -ItemType Directory -Force artifact | Out-Null
           New-Item -ItemType Directory -Force package\obs-plugins\64bit | Out-Null
-
           Copy-Item $dll artifact\task-dock.dll
           Copy-Item $dll package\obs-plugins\64bit\task-dock.dll
 
-          @'
-@echo off
-setlocal
-set "OBS_DIR=%ProgramFiles%\obs-studio"
-set "DLL_SRC=%~dp0obs-plugins\64bit\task-dock.dll"
-set "DLL_DST=%OBS_DIR%\obs-plugins\64bit\task-dock.dll"
+          $install = @(
+            '@echo off',
+            'setlocal',
+            'set "OBS_DIR=%ProgramFiles%\obs-studio"',
+            'set "DLL_SRC=%~dp0obs-plugins\64bit\task-dock.dll"',
+            'set "DLL_DST=%OBS_DIR%\obs-plugins\64bit\task-dock.dll"',
+            '',
+            'if not exist "%DLL_SRC%" (',
+            '  echo ERROR: task-dock.dll is missing from this package.',
+            '  pause',
+            '  exit /b 1',
+            ')',
+            '',
+            'if not exist "%OBS_DIR%\bin\64bit\obs64.exe" (',
+            '  echo ERROR: OBS Studio was not found at %OBS_DIR%',
+            '  pause',
+            '  exit /b 1',
+            ')',
+            '',
+            'tasklist /FI "IMAGENAME eq obs64.exe" 2>NUL | find /I "obs64.exe" >NUL',
+            'if not errorlevel 1 (',
+            '  echo ERROR: Close OBS Studio before installing Todo Dock.',
+            '  pause',
+            '  exit /b 1',
+            ')',
+            '',
+            'copy /Y "%DLL_SRC%" "%DLL_DST%" >NUL',
+            'if errorlevel 1 (',
+            '  echo Installation failed. Right-click Install.cmd and choose "Run as administrator".',
+            '  pause',
+            '  exit /b 1',
+            ')',
+            '',
+            'echo Todo Dock installed successfully.',
+            'echo Start OBS Studio and open Docks ^> Task Dock.',
+            'pause'
+          )
+          Set-Content -Path package\Install.cmd -Value $install -Encoding ASCII
 
-if not exist "%DLL_SRC%" (
-  echo ERROR: task-dock.dll is missing from this package.
-  pause
-  exit /b 1
-)
+          $uninstall = @(
+            '@echo off',
+            'setlocal',
+            'set "DLL_DST=%ProgramFiles%\obs-studio\obs-plugins\64bit\task-dock.dll"',
+            '',
+            'tasklist /FI "IMAGENAME eq obs64.exe" 2>NUL | find /I "obs64.exe" >NUL',
+            'if not errorlevel 1 (',
+            '  echo ERROR: Close OBS Studio before uninstalling Todo Dock.',
+            '  pause',
+            '  exit /b 1',
+            ')',
+            '',
+            'if exist "%DLL_DST%" del /F /Q "%DLL_DST%"',
+            'if exist "%DLL_DST%" (',
+            '  echo Uninstall failed. Run this file as administrator.',
+            '  pause',
+            '  exit /b 1',
+            ')',
+            '',
+            'echo Todo Dock removed.',
+            'pause'
+          )
+          Set-Content -Path package\Uninstall.cmd -Value $uninstall -Encoding ASCII
 
-if not exist "%OBS_DIR%\bin\64bit\obs64.exe" (
-  echo ERROR: OBS Studio was not found at:
-  echo   %OBS_DIR%
-  echo.
-  echo Install OBS Studio first, or copy task-dock.dll manually into:
-  echo   ^<your OBS folder^>\obs-plugins\64bit
-  pause
-  exit /b 1
-)
-
-tasklist /FI "IMAGENAME eq obs64.exe" 2>NUL | find /I "obs64.exe" >NUL
-if not errorlevel 1 (
-  echo ERROR: Close OBS Studio before installing Todo Dock.
-  pause
-  exit /b 1
-)
-
-copy /Y "%DLL_SRC%" "%DLL_DST%" >NUL
-if errorlevel 1 (
-  echo.
-  echo Installation failed. Right-click Install.cmd and choose "Run as administrator".
-  pause
-  exit /b 1
-)
-
-echo.
-echo Todo Dock installed successfully.
-echo Start OBS Studio and open Docks ^> Task Dock.
-pause
-'@ | Set-Content -Encoding ASCII package\Install.cmd
-
-          @'
-@echo off
-setlocal
-set "DLL_DST=%ProgramFiles%\obs-studio\obs-plugins\64bit\task-dock.dll"
-
-tasklist /FI "IMAGENAME eq obs64.exe" 2>NUL | find /I "obs64.exe" >NUL
-if not errorlevel 1 (
-  echo ERROR: Close OBS Studio before uninstalling Todo Dock.
-  pause
-  exit /b 1
-)
-
-if exist "%DLL_DST%" del /F /Q "%DLL_DST%"
-if exist "%DLL_DST%" (
-  echo Uninstall failed. Run this file as administrator.
-  pause
-  exit /b 1
-)
-
-echo Todo Dock removed.
-pause
-'@ | Set-Content -Encoding ASCII package\Uninstall.cmd
-
-          @'
-Todo Dock for OBS Studio - Windows x64
-
-Install:
-1. Close OBS Studio.
-2. Right-click Install.cmd and choose "Run as administrator".
-3. Start OBS Studio.
-4. Open Docks > Task Dock.
-
-Manual install:
-Copy obs-plugins\64bit\task-dock.dll to:
-C:\Program Files\obs-studio\obs-plugins\64bit\task-dock.dll
-
-This build targets OBS Studio 31.1.1 / Qt 6 on Windows x64.
-The DLL is unsigned.
-'@ | Set-Content -Encoding ASCII package\README.txt
+          $readme = @(
+            'Todo Dock for OBS Studio - Windows x64',
+            '',
+            'Install:',
+            '1. Close OBS Studio.',
+            '2. Right-click Install.cmd and choose "Run as administrator".',
+            '3. Start OBS Studio.',
+            '4. Open Docks > Task Dock.',
+            '',
+            'Manual install:',
+            'Copy obs-plugins\64bit\task-dock.dll to:',
+            'C:\Program Files\obs-studio\obs-plugins\64bit\task-dock.dll',
+            '',
+            'This build targets OBS Studio 31.1.1 / Qt 6 on Windows x64.',
+            'The DLL is unsigned.'
+          )
+          Set-Content -Path package\README.txt -Value $readme -Encoding ASCII
 
           $hash = (Get-FileHash $dll -Algorithm SHA256).Hash.ToLower()
           "$hash  task-dock.dll" | Set-Content -Encoding ASCII artifact\SHA256SUMS.txt
