@@ -209,7 +209,7 @@ class TaskDock final : public QWidget {
     std::vector<Task> tasks;
     std::vector<std::unique_ptr<Binding>> hotkeys;
     QListWidget *list;
-    QLabel *saveStatus;
+    QLabel *streamStatus, *saveStatus;
     QAction *removeButton, *upButton, *downButton;
     QString clickedSelectionId;
     QTimer timer;

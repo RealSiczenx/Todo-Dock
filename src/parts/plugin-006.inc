@@ -16,7 +16,7 @@
                              t.detail.isEmpty() ? "" : " • " + t.detail)
                     : observation.message;
 
-                item->setText(t.title + "  ·  AUTO");
+                item->setText(t.title);
             } else {
                 item->setText(t.title);
             }
@@ -27,6 +27,27 @@
             QFont f = list->font();
             f.setStrikeOut(t.checked);
             item->setFont(f);
+        }
+
+        int incomplete = 0;
+        for (const auto &task : tasks)
+            if (!task.checked)
+                ++incomplete;
+
+        const bool live = obs_frontend_streaming_active();
+        if (live) {
+            if (incomplete == 0) {
+                streamStatus->setText("You are live");
+            } else {
+                streamStatus->setText(
+                    incomplete == 1
+                        ? "Live But 1 Task Incomplete"
+                        : QString("Live But %1 Tasks Incomplete").arg(incomplete));
+            }
+        } else {
+            streamStatus->setText(
+                incomplete == 0 ? "You are ready to stream"
+                                : "You are not ready to stream");
         }
     }
 
@@ -84,7 +105,7 @@ void obs_module_post_load(void)
 
     obs_frontend_add_event_callback(frontendEvent, nullptr);
     obs_frontend_add_save_callback(frontendSave, nullptr);
-    blog(LOG_INFO, "[task-dock] Loaded v1.2.1 with 73 automatic conditions");
+    blog(LOG_INFO, "[task-dock] Loaded v1.2.2 with 73 automatic conditions");
 }
 
 void obs_module_unload(void)

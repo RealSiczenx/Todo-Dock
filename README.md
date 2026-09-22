@@ -12,9 +12,11 @@ Build target: **Windows x64, OBS 31.1.1 SDK, Qt 6**. Compatible newer OBS versio
 
 ## Layout
 
-Todo Dock follows the built-in OBS Scenes/Sources dock structure instead of shipping a custom visual theme: 1 px outer margins, zero layout spacing, a frameless list, and a native `QToolBar` with OBS's own 16×16 plus, minus, gear, up, and down resources. The active OBS theme controls the background, borders, title bar, row hover behavior, scrollbars, toolbar height, separators, disabled states, button hover states, and toolbar icon colors automatically. Task Dock intentionally suppresses the blue selected-row fill; clicking a task selects it for Delete/Up/Down, and clicking the same selected task again clears the selection.
+Todo Dock follows the built-in OBS Scenes/Sources dock structure instead of shipping a custom visual theme: 1 px outer margins, zero layout spacing, a frameless list, and a native `QToolBar` with OBS's own 16×16 plus, minus, gear, up, and down resources. The active OBS theme controls the background, borders, title bar, row hover behavior, scrollbars, toolbar height, disabled states, button hover states, and toolbar icon colors automatically. The bottom toolbar keeps Add, Delete, Properties, Up, and Down visible instead of collapsing them into Qt's overflow button. Task Dock intentionally suppresses the blue selected-row fill; clicking a task selects it for Delete/Up/Down, and clicking the same selected task again clears the selection.
 
 ## Features
+
+- **Stream readiness status:** shows `You are not ready to stream` while tasks remain, `You are ready to stream` when all tasks are complete, `You are live` while streaming with everything complete, and `Live But … Tasks Incomplete` if OBS is already live with unfinished tasks.
 
 - **+** → add a custom task or automatic OBS task.
 - **Trash** → delete the selected task.

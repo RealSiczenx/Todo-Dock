@@ -45,7 +45,7 @@ public:
     explicit TaskDock(QWidget *parent = nullptr) : QWidget(parent)
     {
         setObjectName("taskDock");
-        setMinimumSize(150, 110);
+        setMinimumSize(175, 110);
         resize(260, 320);
 
         // Match the built-in latest OBS Scenes/Sources dock hierarchy:
@@ -58,6 +58,11 @@ public:
         auto *frameLayout = new QVBoxLayout(frame);
         frameLayout->setContentsMargins(0, 0, 0, 0);
         frameLayout->setSpacing(0);
+
+        streamStatus = new QLabel(frame);
+        streamStatus->setObjectName("taskStreamStatus");
+        streamStatus->setContentsMargins(8, 5, 8, 5);
+        streamStatus->setText("You are not ready to stream");
 
         list = new QListWidget(frame);
         list->setObjectName("taskList");
@@ -75,6 +80,8 @@ public:
 
         auto *toolbar = new QToolBar(frame);
         toolbar->setIconSize(QSize(16, 16));
+        toolbar->setMinimumWidth(170);
+        toolbar->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
         toolbar->setFloatable(false);
         toolbar->setMovable(false);
         toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
@@ -88,11 +95,12 @@ public:
         removeButton->setShortcut(QKeySequence::Delete);
         removeButton->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 
+        // Keep all five controls visible at normal dock widths. The previous
+        // separators could make Qt collapse Delete/Up/Down into the overflow
+        // "..." button on a narrow dock.
         toolbar->addAction(add);
         toolbar->addAction(removeButton);
-        toolbar->addSeparator();
         toolbar->addAction(settings);
-        toolbar->addSeparator();
         toolbar->addAction(upButton);
         toolbar->addAction(downButton);
 
@@ -103,6 +111,7 @@ public:
         applyObsIconClass(toolbar, upButton, "icon-up");
         applyObsIconClass(toolbar, downButton, "icon-down");
 
+        frameLayout->addWidget(streamStatus);
         frameLayout->addWidget(list, 1);
         frameLayout->addWidget(saveStatus);
         frameLayout->addWidget(toolbar);
