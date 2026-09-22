@@ -60,6 +60,7 @@ public:
         frameLayout->setSpacing(0);
 
         list = new QListWidget(frame);
+        list->setObjectName("taskList");
         list->setSelectionMode(QAbstractItemView::SingleSelection);
         list->setAccessibleName("Tasks");
         list->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -78,11 +79,11 @@ public:
         toolbar->setMovable(false);
         toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
 
-        auto *add = makeAction(":/res/images/plus.svg", "Add", "Add task", "icon-plus", toolbar);
-        removeButton = makeAction(":/res/images/minus.svg", "Remove", "Delete selected task", "icon-trash", toolbar);
-        auto *settings = makeAction(":/settings/images/settings/general.svg", "Properties", "Task Dock options", "icon-gear", toolbar);
-        upButton = makeAction(":/res/images/up.svg", "Move Up", "Move selected task up", "icon-up", toolbar);
-        downButton = makeAction(":/res/images/down.svg", "Move Down", "Move selected task down", "icon-down", toolbar);
+        auto *add = makeAction("Add", "Add task", "icon-plus", toolbar);
+        removeButton = makeAction("Remove", "Delete selected task", "icon-trash", toolbar);
+        auto *settings = makeAction("Properties", "Task Dock options", "icon-gear", toolbar);
+        upButton = makeAction("Move Up", "Move selected task up", "icon-up", toolbar);
+        downButton = makeAction("Move Down", "Move selected task down", "icon-down", toolbar);
 
         removeButton->setShortcut(QKeySequence::Delete);
         removeButton->setShortcutContext(Qt::WidgetWithChildrenShortcut);
@@ -94,6 +95,13 @@ public:
         toolbar->addSeparator();
         toolbar->addAction(upButton);
         toolbar->addAction(downButton);
+
+        // Match the exact theme-driven icon behavior used by OBS itself.
+        applyObsIconClass(toolbar, add, "icon-plus");
+        applyObsIconClass(toolbar, removeButton, "icon-trash");
+        applyObsIconClass(toolbar, settings, "icon-gear");
+        applyObsIconClass(toolbar, upButton, "icon-up");
+        applyObsIconClass(toolbar, downButton, "icon-down");
 
         frameLayout->addWidget(list, 1);
         frameLayout->addWidget(saveStatus);
@@ -154,6 +162,22 @@ public:
         connect(upButton, &QAction::triggered, this, [this] { moveTask(-1); });
         connect(downButton, &QAction::triggered, this, [this] { moveTask(1); });
         connect(list, &QListWidget::currentRowChanged, this, [this] { updateButtons(); });
+
+        // First click selects a task; clicking that same task again clears
+        // selection. Clicking another task moves the selection to that task.
+        connect(list, &QListWidget::itemClicked, this, [this](QListWidgetItem *item) {
+            const QString id = item->data(Qt::UserRole).toString();
+            if (!clickedSelectionId.isEmpty() && clickedSelectionId == id) {
+                list->clearSelection();
+                list->setCurrentRow(-1);
+                clickedSelectionId.clear();
+            } else {
+                clickedSelectionId = id;
+                list->setCurrentItem(item);
+                item->setSelected(true);
+            }
+            updateButtons();
+        });
 
         connect(list, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem *item) {
             editTask(list->row(item));

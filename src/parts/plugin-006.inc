@@ -84,7 +84,7 @@ void obs_module_post_load(void)
 
     obs_frontend_add_event_callback(frontendEvent, nullptr);
     obs_frontend_add_save_callback(frontendSave, nullptr);
-    blog(LOG_INFO, "[task-dock] Loaded v1.1.0 with 73 automatic conditions");
+    blog(LOG_INFO, "[task-dock] Loaded v1.2.1 with 73 automatic conditions");
 }
 
 void obs_module_unload(void)

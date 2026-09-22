@@ -12,7 +12,7 @@ Build target: **Windows x64, OBS 31.1.1 SDK, Qt 6**. Compatible newer OBS versio
 
 ## Layout
 
-Todo Dock follows the built-in OBS Scenes/Sources dock structure instead of shipping a custom visual theme: 1 px outer margins, zero layout spacing, a frameless list, and a native `QToolBar` with OBS's own 16×16 plus, minus, gear, up, and down resources. The active OBS theme controls the background, borders, title bar, row hover/selection, scrollbars, toolbar height, separators, disabled states, and button hover states automatically.
+Todo Dock follows the built-in OBS Scenes/Sources dock structure instead of shipping a custom visual theme: 1 px outer margins, zero layout spacing, a frameless list, and a native `QToolBar` with OBS's own 16×16 plus, minus, gear, up, and down resources. The active OBS theme controls the background, borders, title bar, row hover behavior, scrollbars, toolbar height, separators, disabled states, button hover states, and toolbar icon colors automatically. Task Dock intentionally suppresses the blue selected-row fill; clicking a task selects it for Delete/Up/Down, and clicking the same selected task again clears the selection.
 
 ## Features
 

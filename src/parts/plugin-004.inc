@@ -25,6 +25,19 @@
         // built-in Scenes and Sources docks.
         setStyleSheet(QString());
         list->setFont(font());
+
+        // Keep OBS's normal list spacing/hover behavior, but do not use the
+        // blue selected-row treatment for Task Dock. Selection remains real
+        // internally so Delete/Up/Down still know which task is targeted.
+        list->setStyleSheet(
+            "QListWidget#taskList::item:selected,"
+            "QListWidget#taskList::item:selected:hover,"
+            "QListWidget#taskList::item:selected:focus {"
+            "background: transparent;"
+            "color: palette(text);"
+            "border: 1px solid transparent;"
+            "}"
+        );
     }
 
     void updateButtons()

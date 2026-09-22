@@ -211,16 +211,28 @@ class TaskDock final : public QWidget {
     QListWidget *list;
     QLabel *saveStatus;
     QAction *removeButton, *upButton, *downButton;
+    QString clickedSelectionId;
     QTimer timer;
     QString configPath, accent = "#7C9CFF";
     int fontSize = 13;
     bool compact = false, stopped = false, canSave = true;
 
-    static QAction *makeAction(const QString &iconPath, const QString &text,
-                               const QString &tip, const char *iconClass,
-                               QObject *parent)
+    static QAction *makeAction(const QString &text, const QString &tip,
+                               const char *iconClass, QObject *parent)
     {
-        auto *action = new QAction(QIcon(iconPath), text, parent);
+        // Do not assign a fixed icon here. OBS themes supply the correct
+        // Dark/Light/System icon through the dynamic class property.
+        auto *action = new QAction(text, parent);
         action->setToolTip(tip);
         action->setProperty("class", iconClass);
         return action;
+    }
+
+    static void applyObsIconClass(QToolBar *toolbar, QAction *action, const char *iconClass)
+    {
+        action->setProperty("class", iconClass);
+        if (auto *widget = toolbar->widgetForAction(action)) {
+            widget->setProperty("class", iconClass);
+            widget->style()->unpolish(widget);
+            widget->style()->polish(widget);
+        }
