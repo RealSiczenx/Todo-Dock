@@ -2,9 +2,9 @@
 #include <obs-frontend-api.h>
 #include <obs-hotkey.h>
 #include <util/platform.h>
+#include <QAction>
 #include <QApplication>
 #include <QCheckBox>
-#include <QColorDialog>
 #include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -12,8 +12,9 @@
 #include <QDockWidget>
 #include <QFile>
 #include <QFileInfo>
+#include <QFrame>
 #include <QFormLayout>
-#include <QHBoxLayout>
+#include <QIcon>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -23,14 +24,12 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QPointer>
-#include <QPushButton>
 #include <QSaveFile>
 #include <QSignalBlocker>
 #include <QSize>
-#include <QSpinBox>
 #include <QStyle>
+#include <QToolBar>
 #include <QTimer>
-#include <QToolButton>
 #include <QUuid>
 #include <QVBoxLayout>
 #include <algorithm>

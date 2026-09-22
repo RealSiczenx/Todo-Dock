@@ -1,6 +1,6 @@
 # Todo Dock for OBS Studio
 
-Native OBS task checklist with custom tasks, hotkeys, **73 automatic native OBS conditions**, reorder controls, and a compact OBS-style dock layout.
+Native OBS task checklist with custom tasks, hotkeys, **73 automatic native OBS conditions**, reorder controls, and a dock built from the same native Qt structure as the current OBS Scenes/Sources docks.
 
 ## Download the Windows DLL
 
@@ -12,7 +12,7 @@ Build target: **Windows x64, OBS 31.1.1 SDK, Qt 6**. Compatible newer OBS versio
 
 ## Layout
 
-The dock intentionally stays minimal like an OBS utility dock: the task list fills the panel and the bottom toolbar is **Add (+), Delete, Customization (gear), Up, Down**. There is no permanent header or status block taking space away from tasks.
+Todo Dock follows the built-in OBS Scenes/Sources dock structure instead of shipping a custom visual theme: 1 px outer margins, zero layout spacing, a frameless list, and a native `QToolBar` with OBS's own 16×16 plus, minus, gear, up, and down resources. The active OBS theme controls the background, borders, title bar, row hover/selection, scrollbars, toolbar height, separators, disabled states, and button hover states automatically.
 
 ## Features
 

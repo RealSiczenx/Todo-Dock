@@ -19,19 +19,12 @@
 
     void styleDock()
     {
-        setStyleSheet(QString(
-            "QWidget#taskDock { font-size:%1px; }"
-            "QListWidget#taskList { border:0; padding:3px; background:transparent; }"
-            "QListWidget#taskList::item { padding:%2px 5px; border-radius:3px; }"
-            "QListWidget#taskList::item:selected { background:palette(highlight); color:palette(highlighted-text); }"
-            "QWidget#taskToolbar { border-top:1px solid palette(mid); }"
-            "QToolButton { border:0; padding:0; margin:0; }"
-            "QToolButton:hover { background:palette(midlight); border-radius:3px; }"
-        ).arg(fontSize).arg(compact ? 3 : 7));
-
-        QFont f = list->font();
-        f.setPixelSize(fontSize);
-        list->setFont(f);
+        // Deliberately do not apply a plugin stylesheet here. The dock is
+        // hosted inside OBS's OBSDock, so the active OBS theme styles the
+        // list, scrollbars, toolbar, separators and buttons exactly like the
+        // built-in Scenes and Sources docks.
+        setStyleSheet(QString());
+        list->setFont(font());
     }
 
     void updateButtons()

@@ -210,18 +210,17 @@ class TaskDock final : public QWidget {
     std::vector<std::unique_ptr<Binding>> hotkeys;
     QListWidget *list;
     QLabel *saveStatus;
-    QToolButton *removeButton, *upButton, *downButton;
+    QAction *removeButton, *upButton, *downButton;
     QTimer timer;
     QString configPath, accent = "#7C9CFF";
     int fontSize = 13;
     bool compact = false, stopped = false, canSave = true;
 
-    static QToolButton *button(const QString &text, const QString &tip, QWidget *parent)
+    static QAction *makeAction(const QString &iconPath, const QString &text,
+                               const QString &tip, const char *iconClass,
+                               QObject *parent)
     {
-        auto *b = new QToolButton(parent);
-        b->setText(text);
-        b->setToolTip(tip);
-        b->setAccessibleName(tip);
-        b->setAutoRaise(true);
-        b->setFixedSize(24, 24);
-        return b;
+        auto *action = new QAction(QIcon(iconPath), text, parent);
+        action->setToolTip(tip);
+        action->setProperty("class", iconClass);
+        return action;

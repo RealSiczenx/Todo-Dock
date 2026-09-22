@@ -41,52 +41,6 @@
         save();
     }
 
-    void customize()
-    {
-        QDialog dialog(this);
-        dialog.setWindowTitle("Customize Task Dock");
-        auto *form = new QFormLayout(&dialog);
-
-        auto *size = new QSpinBox(&dialog);
-        size->setRange(10, 24);
-        size->setValue(fontSize);
-        size->setSuffix(" px");
-
-        auto *density = new QCheckBox("Compact task rows", &dialog);
-        density->setChecked(compact);
-
-        auto *color = new QPushButton("Choose accent color…", &dialog);
-        QString selected = accent;
-        connect(color, &QPushButton::clicked, &dialog, [&] {
-            const auto c = QColorDialog::getColor(QColor(selected), &dialog, "Accent color");
-            if (c.isValid())
-                selected = c.name();
-        });
-
-        form->addRow("Text size", size);
-        form->addRow("", density);
-        form->addRow("Accent", color);
-
-        auto *note = new QLabel(
-            "The dock uses the compact OBS-style layout: task list above, then Add, Delete, Customize, Up and Down along the bottom.",
-            &dialog);
-        note->setWordWrap(true);
-        form->addRow(note);
-
-        auto *buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, &dialog);
-        form->addRow(buttons);
-        connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-        connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-
-        if (dialog.exec() == QDialog::Accepted) {
-            fontSize = size->value();
-            compact = density->isChecked();
-            accent = selected;
-            styleDock();
-            save();
-        }
-    }
-
 public:
     explicit TaskDock(QWidget *parent = nullptr) : QWidget(parent)
     {
@@ -94,56 +48,67 @@ public:
         setMinimumSize(150, 110);
         resize(260, 320);
 
+        // Match the built-in latest OBS Scenes/Sources dock hierarchy:
+        // 1 px outer edge, zero spacing, frameless item view, native QToolBar.
         auto *layout = new QVBoxLayout(this);
-        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setContentsMargins(1, 0, 1, 1);
         layout->setSpacing(0);
 
-        list = new QListWidget(this);
-        list->setObjectName("taskList");
+        auto *frame = new QFrame(this);
+        auto *frameLayout = new QVBoxLayout(frame);
+        frameLayout->setContentsMargins(0, 0, 0, 0);
+        frameLayout->setSpacing(0);
+
+        list = new QListWidget(frame);
         list->setSelectionMode(QAbstractItemView::SingleSelection);
         list->setAccessibleName("Tasks");
         list->setContextMenuPolicy(Qt::CustomContextMenu);
+        list->setFrameShape(QFrame::NoFrame);
+        list->setFrameShadow(QFrame::Plain);
         list->setSpacing(0);
+        list->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
-        saveStatus = new QLabel(this);
+        saveStatus = new QLabel(frame);
         saveStatus->setWordWrap(true);
-        saveStatus->setContentsMargins(6, 4, 6, 4);
         saveStatus->hide();
 
-        auto *toolbarHost = new QWidget(this);
-        toolbarHost->setObjectName("taskToolbar");
-        auto *toolbar = new QHBoxLayout(toolbarHost);
-        toolbar->setContentsMargins(4, 2, 4, 2);
-        toolbar->setSpacing(2);
+        auto *toolbar = new QToolBar(frame);
+        toolbar->setIconSize(QSize(16, 16));
+        toolbar->setFloatable(false);
+        toolbar->setMovable(false);
+        toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
 
-        auto *add = button("+", "Add task", toolbarHost);
-        removeButton = button("", "Delete selected task", toolbarHost);
-        removeButton->setIcon(style()->standardIcon(QStyle::SP_TrashIcon));
-        removeButton->setIconSize(QSize(14, 14));
+        auto *add = makeAction(":/res/images/plus.svg", "Add", "Add task", "icon-plus", toolbar);
+        removeButton = makeAction(":/res/images/minus.svg", "Remove", "Delete selected task", "icon-trash", toolbar);
+        auto *settings = makeAction(":/settings/images/settings/general.svg", "Properties", "Task Dock options", "icon-gear", toolbar);
+        upButton = makeAction(":/res/images/up.svg", "Move Up", "Move selected task up", "icon-up", toolbar);
+        downButton = makeAction(":/res/images/down.svg", "Move Down", "Move selected task down", "icon-down", toolbar);
 
-        auto *settings = button("⚙", "Customization", toolbarHost);
-        upButton = button("↑", "Move selected task up", toolbarHost);
-        downButton = button("↓", "Move selected task down", toolbarHost);
+        removeButton->setShortcut(QKeySequence::Delete);
+        removeButton->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 
-        toolbar->addWidget(add);
-        toolbar->addWidget(removeButton);
-        toolbar->addWidget(settings);
-        toolbar->addWidget(upButton);
-        toolbar->addWidget(downButton);
-        toolbar->addStretch(1);
+        toolbar->addAction(add);
+        toolbar->addAction(removeButton);
+        toolbar->addSeparator();
+        toolbar->addAction(settings);
+        toolbar->addSeparator();
+        toolbar->addAction(upButton);
+        toolbar->addAction(downButton);
 
-        layout->addWidget(list, 1);
-        layout->addWidget(saveStatus);
-        layout->addWidget(toolbarHost);
+        frameLayout->addWidget(list, 1);
+        frameLayout->addWidget(saveStatus);
+        frameLayout->addWidget(toolbar);
+        layout->addWidget(frame, 1);
 
-        auto *addMenu = new QMenu(add);
+        auto *addMenu = new QMenu(this);
         addMenu->addAction("Custom task…", this, [this] { editTask(-1); });
         addMenu->addAction("Automatic OBS task…", this, [this] { editTask(-1, true); });
-        add->setMenu(addMenu);
-        add->setPopupMode(QToolButton::InstantPopup);
+        connect(add, &QAction::triggered, this, [toolbar, add, addMenu] {
+            if (auto *button = toolbar->widgetForAction(add))
+                addMenu->popup(button->mapToGlobal(QPoint(0, button->height())));
+        });
 
-        auto *menu = new QMenu(settings);
-        menu->addAction("Customize dock…", this, [this] { customize(); });
+        auto *menu = new QMenu(this);
         menu->addAction("Edit selected task…", this, [this] {
             if (list->currentRow() >= 0)
                 editTask(list->currentRow());
@@ -166,10 +131,12 @@ public:
             refresh();
             save();
         });
-        settings->setMenu(menu);
-        settings->setPopupMode(QToolButton::InstantPopup);
+        connect(settings, &QAction::triggered, this, [toolbar, settings, menu] {
+            if (auto *button = toolbar->widgetForAction(settings))
+                menu->popup(button->mapToGlobal(QPoint(0, button->height())));
+        });
 
-        connect(removeButton, &QToolButton::clicked, this, [this] {
+        connect(removeButton, &QAction::triggered, this, [this] {
             const int row = list->currentRow();
             if (row < 0) return;
             if (QMessageBox::question(this, "Delete task", "Delete “" + tasks[row].title + "”?") != QMessageBox::Yes)
@@ -184,8 +151,8 @@ public:
             save();
         });
 
-        connect(upButton, &QToolButton::clicked, this, [this] { moveTask(-1); });
-        connect(downButton, &QToolButton::clicked, this, [this] { moveTask(1); });
+        connect(upButton, &QAction::triggered, this, [this] { moveTask(-1); });
+        connect(downButton, &QAction::triggered, this, [this] { moveTask(1); });
         connect(list, &QListWidget::currentRowChanged, this, [this] { updateButtons(); });
 
         connect(list, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem *item) {
